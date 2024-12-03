@@ -5,12 +5,20 @@ from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
 import os
+import logging
 
 from apscheduler.schedulers.blocking import BlockingScheduler
 BASE_DIR = Path(__file__).resolve().parent
-dotenv_path = BASE_DIR / '.env'
+dotenv_path = BASE_DIR / 'prod.env'
 load_dotenv(dotenv_path)
 
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler()]
+)
+logger = logging.getLogger()
 # PostgreSQL connection details
 DB_CONFIG = {
     "dbname": os.environ.get("DB_NAME"),
@@ -29,6 +37,7 @@ FILTER_IDS = {
     "5d1a14ef5513d14fe22a94e5",
     "6411bbb42145880788f3dd3f",
     "5841ad6dc517f11e822951c2",
+    "56be71605f40d3ba38e6f484"
 }
 
 def fetch_data():
@@ -74,10 +83,11 @@ def save_to_postgresql(data):
         conn.commit()
         cur.close()
         conn.close()
-
+        logger.info(f"Successfully wrote {len(data)} records to the database.")
         print(f"Data saved at {datetime.now()}")
     except psycopg2.Error as e:
         print(f"Error saving data to PostgreSQL: {e}")
+        logger.error(f"Error writing to database: {e}")
 
 def scrape_data():
     data = fetch_data()
